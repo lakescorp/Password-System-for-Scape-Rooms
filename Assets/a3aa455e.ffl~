@@ -1,0 +1,152 @@
+using UnityEngine;
+using UnityEngine.UI;
+using SFB;
+
+public class manager : MonoBehaviour
+{
+    public int tamanoCodigo
+    {
+        get { return tamanoCodigo; }
+        set
+        {
+            if (value >= 0 && value <=8)
+                tamanoCodigo = value;
+            else
+                tamanoCodigo = -1;
+        }
+    }
+
+    public float cuentaAtras
+    {
+        get { return cuentaAtras; }
+        set
+        {
+            if (value >= 0)
+                cuentaAtras = value * 60;
+            else
+                cuentaAtras = -1;
+        }
+    }
+
+    public string mensajeConseguido;
+    public string mensajePerdido;
+
+    public string password;
+    public RawImage imagen;
+
+    public Transform inputs;
+
+    public Transform mensajeError;
+    public Transform canvas;
+
+    public TMPro.TMP_Text cuentaAtrasTexto;
+    public TMPro.TMP_Text mensajeFinal;
+
+
+    public TMPro.TMP_Text erroresConf;
+    public Transform pantallaDeEspera;
+
+    // Campos privadois
+    float tiempoTranscurrido;
+    bool juegoTreminado = false;
+    int acertadas = 0;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        for (int x = 0; x < inputs.childCount; x++)
+        {
+            int z = x;
+            TMPro.TMP_InputField componente = inputs.GetChild(x).GetComponent<TMPro.TMP_InputField>();
+            componente.onValueChanged.AddListener(
+                delegate {
+                if (checkIntroducedValue(z, componente.text)) {
+                    componente.interactable = false;
+                    }
+                    else
+                    {
+                        Instantiate(mensajeError, canvas);
+                    }
+            });
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (!juegoTreminado) {
+            tiempoTranscurrido += Time.deltaTime;
+            if (tiempoTranscurrido <= cuentaAtras)
+            {
+                cuentaAtrasTexto.text = (int)((cuentaAtras - tiempoTranscurrido) / 60) + ":" + (int)(cuentaAtras - tiempoTranscurrido);
+            }
+            else
+            {
+                juegoTreminado = true;
+                canvas.GetComponent<Animator>().Play("close");
+                mensajeFinal.text = mensajePerdido;
+            }
+        }
+    }
+
+    public bool checkIntroducedValue(int x, string newValue)
+    {
+        if (password[x] == newValue[0]) acertadas++;
+        if (acertadas == password.Length) {
+            juegoTreminado = true;
+            canvas.GetComponent<Animator>().Play("win");
+            mensajeFinal.text = mensajeConseguido;
+        }
+        return password[x] == newValue[0];
+    }
+
+    public void getImage()
+    {
+        var extensions = new[] {
+            new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ) };
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, true);
+        print("Obtenemos el path -> " + paths[0]);
+        var rawData = System.IO.File.ReadAllBytes(paths[0]);
+        Texture2D tex = new Texture2D(2, 2); // Create an empty Texture; size doesn't matter (she said)
+        tex.LoadImage(rawData);
+        imagen.texture = tex;
+    }
+
+    public void setCodigo(string codigo)
+    {
+        tamanoCodigo = codigo.Length;
+        if (tamanoCodigo==-1) {
+            erroresConf.text = "El tamaño de la contraseña es mayor a 8 o no hay";
+        }
+        else
+        {
+            password = codigo;
+        }
+    }
+
+    public void setCuentaAtras(string codigo)
+    {
+        cuentaAtras = int.Parse(codigo);
+        if (cuentaAtras == -1)
+        {
+            erroresConf.text = "La cantidad de tiempo es menor a 0 o no hay";
+        }
+    }
+
+    public void setMensajeGanado(string codigo)
+    {
+        mensajeConseguido = codigo;
+    }
+
+    public void setMensajePerdido(string codigo)
+    {
+        mensajePerdido = codigo;
+    }
+
+    public void meterDatos() {
+        if (tamanoCodigo != -1 && cuentaAtras != -1 && mensajeConseguido != "" && mensajePerdido != "") { 
+            pantallaDeEspera.s
+        }
+    }
+
+}
