@@ -4754,7 +4754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a73a8caa0b4a8654e95314984d677900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  backgroundImage: {fileID: 0}
+  backgroundImage: {fileID: 1587700141}
   inputs: {fileID: 1342162}
   errorMessagePrefab: {fileID: 5511070868054257127, guid: bf9c975dac0db1b41a2a2655a8985f8f, type: 3}
   canvas: {fileID: 279477967}
