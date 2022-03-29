@@ -8,7 +8,7 @@ Fill the data
 * Attemps: Max attemps players have
 * Win message: This message appears when password isd correct
 * Win message: This message appears if game runs out of time  
-![First Screen](https://github.com/lakescorp/Password-System-for-Scape-Rooms/blob/main/ReadMe/Captura%20de%20pantalla%202021-11-29%20223342.png)
+![First Screen](https://user-images.githubusercontent.com/57636815/160645713-c9f77333-2256-4947-880a-a80da9aca9d6.png)
 
 ## Wait Screen
 * Click screen when game is going to start
@@ -24,3 +24,5 @@ Fill the data
 
 # Specs
 * Designed for 16:9 displays
+* Build is for Windows 64 Bits
+* Developed in Unity 2020.3.31f1
