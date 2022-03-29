@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using SFB;
 using System.Collections.Generic;
 
-public class manager : MonoBehaviour
+public class Manager : MonoBehaviour
 {
     // Edit this
-    Dictionary<string, string> messages = new Dictionary<string, string>(){
+    private Dictionary<string, string> _messages = new Dictionary<string, string>(){
         {"passwordError", "There is no password or is bigger than 8"},
         {"passwordCorrect", "Password field is correctly filled"},
         {"timeError", "There is no time or its less than 1"},
@@ -17,20 +17,23 @@ public class manager : MonoBehaviour
         {"errorFields", "Please fill all the fields"}
     };
 
-    [Header("Game Settings")]
-    int _passwordLength;
-    int passwordLength
+    // Program counters
+    private float _currentTime = 0f;
+    private bool _gameFinished = true;
+    private int _correctCounter = 0;
+    private int _actualAttemps = 0;
+
+
+    private int _passwordLength, _maxAttempts;
+    private float _countDownTime;
+    private string _winMessage, _loseMessage, _password;
+
+    int PasswordLength
     {
-        get {
-            if (_passwordLength == null)
-            {
-                _passwordLength = -1;
-            }
-            return _passwordLength;
-        }
+        get => _passwordLength;
         set
         {
-            if (value == null || (value > 0 && value <= 8))
+            if (value > 0 && value <= 8)
             {
                 _passwordLength = value;
             }
@@ -41,20 +44,13 @@ public class manager : MonoBehaviour
         }
     }
 
-    float _countDownTime;
-
-    float countDownTime
+    float CountDownTime
     {
-        get {
-            if (_countDownTime == null)
-            {
-                _countDownTime = -1;
-            }
-            return _countDownTime;
-        }
+        get => _countDownTime;
+
         set
         {
-            if (value == null || value >= 0)
+            if (value >= 0)
             {
                 _countDownTime = value * 60;
             }
@@ -65,38 +61,18 @@ public class manager : MonoBehaviour
         }
     }
 
-    int _maxAttempts;
-
-    int maxAttempts
+    int MaxAttempts
     {
-        get
-        {
-            if (_maxAttempts == null)
-            {
-                _maxAttempts = -1;
-            }
-            return _maxAttempts;
-        }
+        get => _maxAttempts;
+
         set
         {
-            if (value == null || value >= 0)
-            {
-                _maxAttempts = value;
-            }
-            else
-            {
-                _maxAttempts = -1;
-            }
+            _maxAttempts = value >= 0 ? value : -1;
         }
     }
 
-    string winMessage;
-    string loseMessage;
-
-    string password;
-
     [Header("GameScene References")]
-    public RawImage backgroundImage;
+    public RawImage BackgroundImage;
 
     public Transform inputs;
     public Transform errorMessagePrefab;
@@ -113,166 +89,181 @@ public class manager : MonoBehaviour
     public Transform waitScreen;
     public Transform gameScreen;
 
-    // Program coounters
-    float currentTime = 0f;
-    bool gameFinished = true;
-    int correctCounter = 0;
-    int actualAttemps = 0;
-
     // Update is called once per frame
     void Update()
     {
-        if (!gameFinished) {
-            currentTime += Time.deltaTime;
-            if (currentTime <= countDownTime)
-            {
-                text_countDown.text = (int)((countDownTime - currentTime) / 60) + ":" + (int)((countDownTime - currentTime)%60);
-            }
-            else
-            {
-                close();
-            }
+        if (_gameFinished) return;
+        _currentTime += Time.deltaTime;
+        if (_currentTime <= CountDownTime)
+        {
+            text_countDown.text = (int)((CountDownTime - _currentTime) / 60) + ":" + (int)((CountDownTime - _currentTime)%60);
+        }
+        else
+        {
+            Close();
         }
     }
 
-    void close()
+    /// <summary>
+    /// Shows lose message
+    /// </summary>
+    void Close()
     {
-        gameFinished = true;
+        _gameFinished = true;
         canvas.GetComponent<Animator>().Play("close");
-        text_finalMessage.text = loseMessage;
+        text_finalMessage.text = _loseMessage;
     }
 
-    public bool checkIntroducedValue(int x, string newValue)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="newValue"></param>
+    /// <returns></returns>
+    public bool CheckIntroducedValue(int x, string newValue)
     {
-        if (password[x] == newValue[0]) correctCounter++;
-        if (correctCounter == password.Length) {
-            gameFinished = true;
+        if (_password[x] == newValue[0]) _correctCounter++;
+        if (_correctCounter == _password.Length) {
+            _gameFinished = true;
             canvas.GetComponent<Animator>().Play("win");
-            text_finalMessage.text = winMessage;
+            text_finalMessage.text = _winMessage;
         }
-        return password[x] == newValue[0];
+        return _password[x] == newValue[0];
     }
 
-    public void getImage()
+    /// <summary>
+    /// Opens the file browser to select a Image 
+    /// </summary>
+    public void GetImage()
     {
-        var extensions = new[] {
-            new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ) };
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, true);
-        print("Obtenemos el path -> " + paths[0]);
-        var rawData = System.IO.File.ReadAllBytes(paths[0]);
-        Texture2D tex = new Texture2D(2, 2); // Create an empty Texture; size doesn't matter (she said)
-        tex.LoadImage(rawData);
-        backgroundImage.texture = tex;
-    }
-
-    public void setPassword(string input)
-    {
-        passwordLength = input.Length;
-        if (passwordLength==-1) {
-            text_errors.text = messages["passwordError"];
-        }
-        else
-        {
-            password = input;
-            text_errors.text = messages["passwordCorrect"];
-        }
-    }
-
-    public void setCountDown(string codigo)
-    {
+        var extensions = new[] { new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ) };
+        string path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false)[0];
         try
         {
-            countDownTime = int.Parse(codigo);
+            var rawData = System.IO.File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(2, 2); // Create an empty Texture; size doesn't matter (she said)
+            tex.LoadImage(rawData);
+            BackgroundImage.texture = tex;
         }
         catch
         {
-            countDownTime = -1;
+
         }
 
-        if (countDownTime == -1)
-        {
-            text_errors.text = messages["timeError"];
+    }
+
+    /// <summary>
+    /// Set a password that must be guessed
+    /// </summary>
+    /// <param name="password">Password</param>
+    public void SetPassword(string password)
+    {
+        PasswordLength = password.Length;
+        if (PasswordLength==-1) {
+            text_errors.text = _messages["passwordError"];
         }
         else
         {
-            text_errors.text = messages["timeCorrect"];
+            _password = password;
+            text_errors.text = _messages["passwordCorrect"];
         }
     }
 
-    public void setAttemps(string codigo)
+    /// <summary>
+    /// Set the countdown
+    /// </summary>
+    /// <param name="time"></param>
+    public void SetCountDown(string time)
     {
         try
         {
-            maxAttempts = int.Parse(codigo);
+            CountDownTime = int.Parse(time);
         }
         catch
         {
-            maxAttempts = -1;
+            CountDownTime = -1;
         }
-
-        if (maxAttempts == -1)
-        {
-            text_errors.text = messages["atempsError"];
-        }
-        else
-        {
-            text_errors.text = messages["atempsCorrect"];
-        }
+        text_errors.text = CountDownTime == -1 ? _messages["timeError"] : _messages["timeCorrect"];
     }
 
-    public void setWinnedMessage(string codigo)
+    /// <summary>
+    /// Set the max attemps to solve the password
+    /// </summary>
+    /// <param name="attemps"></param>
+    public void SetAttemps(string attemps)
     {
-        winMessage = codigo;
+        try
+        {
+            MaxAttempts = int.Parse(attemps);
+        }
+        catch
+        {
+            MaxAttempts = -1;
+        }
+
+        text_errors.text = MaxAttempts == -1 ? _messages["atempsError"] : _messages["atempsCorrect"];
     }
 
-    public void setLoseMessage(string codigo)
-    {
-        loseMessage = codigo;
-    }
+    /// <summary>
+    /// Set the Won messgae
+    /// </summary>
+    /// <param name="wonMessage"></param>
+    public void SetWonMessage(string wonMessage) => _winMessage = wonMessage;
 
-    public void introduceData() {
-        if (passwordLength != -1 && countDownTime != -1 && maxAttempts != -1 && winMessage != "" && loseMessage != "") {
+    /// <summary>
+    /// Set the lose message
+    /// </summary>
+    /// <param name="loseMessage"></param>
+    public void SetLoseMessage(string loseMessage) => _loseMessage = loseMessage;
+
+    /// <summary>
+    /// Checks all fields are correct
+    /// </summary>
+    public void IntroduceData() {
+        if (PasswordLength != -1 && CountDownTime != -1 && MaxAttempts != -1 && _winMessage != "" && _loseMessage != "") {
             text_errors.transform.parent.gameObject.SetActive(false);
             waitScreen.gameObject.SetActive(true);
-            text_attemps.text = messages["remainingAtemps"] + (maxAttempts - actualAttemps);
+            text_attemps.text = _messages["remainingAtemps"] + (MaxAttempts - _actualAttemps);
         }
         else
         {
-            text_errors.text = messages["errorFields"];
+            text_errors.text = _messages["errorFields"];
         }
     }
 
-    public void startGame() {
-        gameFinished = false;
+    /// <summary>
+    /// Starts the game
+    /// </summary>
+    public void StartGame() {
+        _gameFinished = false;
         waitScreen.gameObject.SetActive(false);
         gameScreen.gameObject.SetActive(true);
-        configureInputs();
+        ConfigureInputs();
     }
 
-    void configureInputs() {
-        bool par = passwordLength % 2 == 0;
-        inputs.localPosition = inputs.localPosition + new Vector3((inputs.childCount - passwordLength) * 117 /*+ (par ? 0 : -65)*/, 0, 0);
-
-
-        for (int x = 0; x < passwordLength; x++)
+    /// <summary>
+    /// Prepares all the input fields of the pasword
+    /// </summary>
+    void ConfigureInputs() {
+        for (int x = 0; x < PasswordLength; x++)
         {
             int z = x;
             TMPro.TMP_InputField componente = inputs.GetChild(x).GetComponent<TMPro.TMP_InputField>();
             componente.onValueChanged.AddListener(
                 delegate
                 {
-                    if (checkIntroducedValue(z, componente.text))
+                    if (CheckIntroducedValue(z, componente.text))
                     {
                         componente.interactable = false;
                     }
                     else
                     {
                         GetComponent<AudioSource>().PlayOneShot(sound_wrong);
-                        actualAttemps += 1;
-                        text_attemps.text = messages["remainingAtemps"] + (maxAttempts - actualAttemps);
-                        if (actualAttemps == maxAttempts)
+                        _actualAttemps += 1;
+                        text_attemps.text = _messages["remainingAtemps"] + (MaxAttempts - _actualAttemps);
+                        if (_actualAttemps == MaxAttempts)
                         {
-                            close();
+                            Close();
                         }
                         else
                         {
@@ -282,7 +273,7 @@ public class manager : MonoBehaviour
                 });
         }
 
-        for (int x = passwordLength; x < inputs.childCount; x++)
+        for (int x = PasswordLength; x < inputs.childCount; x++)
         {
             inputs.GetChild(x).gameObject.SetActive(false);
         }
